@@ -1,0 +1,10 @@
+POST http://localhost:5000/juegos
+Content-Type: application/json
+
+{
+    "nombre": "Celeste",
+    "precio": 19.99,
+    "categoriaId": 2,
+    "esta_oferta": true,
+    "estado": true
+}

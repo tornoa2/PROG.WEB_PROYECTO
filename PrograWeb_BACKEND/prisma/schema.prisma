@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id       Int           @id @default(autoincrement())
+  correo   String        @unique
+  password String
+  nombre   String?
+  token    String?
+  estado   Boolean       @default(true)
+  ventas   Venta[]
+  calificaciones Calificacion[]
+}
+
+model Categoria {
+  id     Int     @id @default(autoincrement())
+  nombre String
+  juegos Juego[]
+}
+
+model Plataforma {
+  id     Int     @id @default(autoincrement())
+  nombre String
+  juegos Juego_Plataforma[]
+}
+
+model Juego {
+  id          Int           @id @default(autoincrement())
+  nombre      String
+  precio      Decimal
+  esta_oferta Boolean       @default(false)
+  estado      Boolean       @default(true)
+
+  categoria   Categoria?    @relation(fields: [categoriaId], references: [id])
+  categoriaId Int?
+
+  ventas      Venta[]
+  calificaciones Calificacion[]
+  plataformas Juego_Plataforma[]
+}
+
+model Venta {
+  id          Int      @id @default(autoincrement())
+  fecha       DateTime @default(now())
+  codigo      String
+  monto_pagado Decimal
+
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  usuarioId Int
+
+  juego     Juego     @relation(fields: [juegoId], references: [id])
+  juegoId   Int
+}
+
+model Calificacion {
+  id          Int      @id @default(autoincrement())
+  valoracion  Int
+  comentario  String?
+
+  juego     Juego    @relation(fields: [juegoId], references: [id])
+  juegoId   Int
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId Int
+}
+
+model Noticia {
+  id      Int     @id @default(autoincrement())
+  titulo  String
+  texto   String
+  activo  Boolean @default(true)
+}
+
+model Juego_Plataforma {
+  id            Int         @id @default(autoincrement())
+  juego         Juego       @relation(fields: [juegoId], references: [id])
+  juegoId       Int
+  plataforma    Plataforma  @relation(fields: [plataformaId], references: [id])
+  plataformaId  Int
+}
