@@ -1,0 +1,40 @@
+body {
+    background-color: #1b1b2f;
+    color: #ffcc00;
+    font-family: 'Press Start 2P', cursive;
+}
+
+h1, h2, h3 {
+    color: #ff00ff;
+    text-shadow: 2px 2px #000;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #2d2d44;
+  padding: 1rem;
+  overflow-x: hidden;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  padding: 0.8rem;
+  white-space: nowrap;         /* Evita que el texto salte de línea */
+  overflow: hidden;            /* Evita que se salga del contenedor */
+  text-overflow: ellipsis;     /* Muestra "..." si el texto es muy largo */
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.sidebar li.active {
+  background-color: #ffffff;
+  color: #1b1b2f;
+  font-weight: bold;
+  max-width: 100%;
+  box-sizing: border-box;
+}

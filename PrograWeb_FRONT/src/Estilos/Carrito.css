@@ -1,0 +1,21 @@
+.cart-offcanvas {
+  border-left: 2px solid #00ffe1;
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.text-neon {
+  color: #00ffe1;
+  text-shadow: 0 0 6px #00ffe1;
+}
+
+.btn-outline-neon {
+  color: #00ffe1;
+  border: 1px solid #00ffe1;
+  background: transparent;
+}
+
+.btn-outline-neon:hover {
+  color: #00ffe1;
+  border: 1px solid #00ffe1;
+  background: transparent;
+}

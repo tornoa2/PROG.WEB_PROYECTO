@@ -1,0 +1,68 @@
+.navbar-freaky {
+    background: linear-gradient(90deg, #0f0c29, #302b63, #24243e);
+    border-bottom: 2px solid #39ff14;
+    font-family: 'Press Start 2P', cursive;
+    box-shadow: 0 0 15px #00ffe1;
+    z-index: 1000;
+    
+}
+
+.text-neon {
+  color: #00ffe1 !important;
+  text-shadow: 0 0 4px #00ffe1, 0 0 10px #00ffe1;
+  font-weight: bold;
+}
+
+
+.border-neon {
+    border: 1px solid #00ffe1 !important;
+}
+
+.btn-outline-neon {
+  color: #00ffe1;
+  border: 1px solid #00ffe1;
+  background: transparent;
+  font-weight: bold;
+  text-shadow: 0 0 6px #00ffe1, 0 0 10px #00ffe1;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-outline-neon:hover {
+  background-color: #00ffe1;
+  color: #1b1b2f;
+  text-shadow: none;
+}
+
+
+.dropdown-menu.border-neon {
+    border: 2px solid #00ffe1;
+}
+
+.navbar-brand {
+  font-size: 3.ex; 
+  font-weight: bold;
+  color: #39ff14 !important;
+  text-shadow: 0 0 8px #39ff14, 0 0 20px #00ffcc;
+  font-family: 'Press Start 2P', cursive;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+.navbar-nav .nav-link {
+  font-size: 0.9rem;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.navbar-nav {
+  align-items: center;
+}
+
+.navbar-freaky {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+

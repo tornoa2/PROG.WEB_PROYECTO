@@ -1,0 +1,10 @@
+.carousel-item img {
+    border: 4px solid #00ffe1;
+    border-radius: 10px;
+    box-shadow: 0 0 15px #00ffe1;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: #ff00ff;
+}

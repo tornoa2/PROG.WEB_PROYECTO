@@ -1,0 +1,11 @@
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #0a0a0a;
+    color: #39ff14;
+    font-family: 'Share Tech Mono', monospace;
+}
+.table-custom th, .table-custom td {
+    padding: 10px;
+    border: 1px solid #39ff14;
+}
