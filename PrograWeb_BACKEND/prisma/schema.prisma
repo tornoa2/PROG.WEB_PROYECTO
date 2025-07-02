@@ -14,80 +14,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id       Int           @id @default(autoincrement())
-  correo   String        @unique
-  password String
-  nombre   String?
-  token    String?
-  estado   Boolean       @default(true)
-  ventas   Venta[]
-  calificaciones Calificacion[]
+model Game {
+  id              Int         @id @default(autoincrement())
+  rating          Float?
+  image           String?
+  titulo          String
+  description     String?
+  precio          Float
+  descuento       Float?      @default(0)
+  esta_oferta     Boolean?    @default(false)
+  estado          Boolean?    @default(true)
+  videoURL        String?
+  detalleImagenes String[]
+  releaseDate     DateTime?   // <<==== AGREGAR ESTO
+
+  categoria_id    Int?
+  categoria       Category?   @relation(fields: [categoria_id], references: [id])
+
+  plataformas     PlatformOnGame[]
+  ventas          Sale[]
 }
 
-model Categoria {
-  id     Int     @id @default(autoincrement())
-  nombre String
-  juegos Juego[]
+model Platform {
+  id        Int               @id @default(autoincrement())
+  nombre    String
+  juegos    PlatformOnGame[]
 }
 
-model Plataforma {
-  id     Int     @id @default(autoincrement())
-  nombre String
-  juegos Juego_Plataforma[]
+model PlatformOnGame {
+  gameId     Int
+  platformId Int
+
+  game       Game      @relation(fields: [gameId], references: [id])
+  platform   Platform  @relation(fields: [platformId], references: [id])
+
+  @@id([gameId, platformId])
 }
 
-model Juego {
-  id          Int           @id @default(autoincrement())
-  nombre      String
-  precio      Decimal
-  esta_oferta Boolean       @default(false)
-  estado      Boolean       @default(true)
-
-  categoria   Categoria?    @relation(fields: [categoriaId], references: [id])
-  categoriaId Int?
-
-  ventas      Venta[]
-  calificaciones Calificacion[]
-  plataformas Juego_Plataforma[]
+model Category {
+  id      Int     @id @default(autoincrement())
+  nombre  String
+  juegos  Game[]
 }
 
-model Venta {
-  id          Int      @id @default(autoincrement())
-  fecha       DateTime @default(now())
-  codigo      String
-  monto_pagado Decimal
-
-  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
-  usuarioId Int
-
-  juego     Juego     @relation(fields: [juegoId], references: [id])
-  juegoId   Int
+model User {
+  id        Int      @id @default(autoincrement())
+  correo    String   @unique
+  password  String
+  nombre    String
+  token     String?
+  estado    Boolean  @default(true)
+  ventas    Sale[]
 }
 
-model Calificacion {
-  id          Int      @id @default(autoincrement())
-  valoracion  Int
-  comentario  String?
-
-  juego     Juego    @relation(fields: [juegoId], references: [id])
-  juegoId   Int
-
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId Int
-}
-
-model Noticia {
+model News {
   id      Int     @id @default(autoincrement())
   titulo  String
   texto   String
   activo  Boolean @default(true)
 }
 
-model Juego_Plataforma {
-  id            Int         @id @default(autoincrement())
-  juego         Juego       @relation(fields: [juegoId], references: [id])
-  juegoId       Int
-  plataforma    Plataforma  @relation(fields: [plataformaId], references: [id])
-  plataformaId  Int
+model Sale {
+  id            Int      @id @default(autoincrement())
+  fecha         DateTime @default(now())
+  usuario_id    Int
+  juego_id      Int
+  codigo        String
+  monto_pagado  Float
+
+  usuario       User     @relation(fields: [usuario_id], references: [id])
+  juego         Game     @relation(fields: [juego_id], references: [id])
 }

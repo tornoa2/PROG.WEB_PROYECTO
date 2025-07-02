@@ -1,35 +1,101 @@
 import { Modal } from "react-bootstrap";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import FormInput from "./Input";
 import SubmitButton from "./Boton";
-import { ListaGames } from "../Utils/ListaJuegos";
+// import { ListaGames } from "../Utils/ListaJuegos";
 
 import "../Estilos/Modal.css";
 
 interface ModalAgregarJuego {
   show: boolean;
   onHide: () => void;
+  fetchGames: () => Promise<void>;
 }
 
-export default function ModalAgregar({ show, onHide }: ModalAgregarJuego) {
+export default function ModalAgregar({ show, onHide, fetchGames }: ModalAgregarJuego) {
   const [titulo1, setTitulo1] = useState("");
   const [description, setDescription] = useState("");
   const [precio, setPrecio] = useState(0);
+  
+  const [categorias, setCategorias] = useState<{ id: number, nombre: string }[]>([]);
+  const [categoriaId, setCategoriaId] = useState<number | "">("");
 
-  const handleSubmit = (evt: FormEvent) => {
+  const [plataformas, setPlataformas] = useState<{ id: number, nombre: string }[]>([]);
+  const [plataformasSeleccionadas, setPlataformasSeleccionadas] = useState<number[]>([]);
+
+  const [fechaLanzamiento, setFechaLanzamiento] = useState("");
+
+  const [descuento, setDescuento] = useState(0);
+
+  const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
-    console.log({ titulo1, description, precio });
 
-    if (titulo1 !== "" && description !== "") {
-      ListaGames.push({
-        id: JSON.stringify(ListaGames.length + 1),
+    try {
+      // Validación básica
+      if (titulo1 === "" || description === "" || precio <= 0 || !categoriaId || fechaLanzamiento === "") {
+        console.error("Faltan datos obligatorios.");
+        return;
+      }
+
+      const juegoData = {
         titulo: titulo1,
         description,
         precio,
+        categoriaId,
+        releaseDate: fechaLanzamiento,
+        plataformasSeleccionadas,
+        descuento,
+      };
+
+      const response = await fetch("http://localhost:5000/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(juegoData),
       });
-      onHide();
+
+      if (response.ok) {
+        console.log("Juego creado correctamente");
+        await fetchGames();
+        onHide(); // cerrar modal
+      } else {
+        console.error("Error al crear el juego:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
     }
   };
+
+
+  /* ENDPOINT CATEGORIAS */
+  useEffect(() => {
+  const fetchCategorias = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/categorias");
+      const data = await response.json();
+      setCategorias(data);
+    } catch (error) {
+      console.error("Error al obtener categorías:", error);
+    }
+  };
+
+  fetchCategorias();
+}, []);
+
+  /* ENDPOINT PLATAFORMAS */
+  useEffect(() => {
+  const fetchPlataformas = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/plataformas");
+      const data = await response.json();
+      setPlataformas(data);
+    } catch (error) {
+      console.error("Error al obtener plataformas:", error);
+    }
+  };
+
+  fetchPlataformas();
+}, []);
+
 
   return (
     <Modal show={show} onHide={onHide} centered size="lg" backdrop="static">
@@ -62,40 +128,59 @@ export default function ModalAgregar({ show, onHide }: ModalAgregarJuego) {
           />
 
           <label className="form-label mt-3">Género:</label>
-          <select className="form-control mb-2">
+          <select
+            className="form-control mb-2"
+            value={categoriaId}
+            onChange={(e) => setCategoriaId(e.currentTarget.value ? Number(e.currentTarget.value) : "")}
+          >
             <option value="">Seleccione un género</option>
-            <option value="Acción">Acción</option>
-            <option value="Aventura">Aventura</option>
-            <option value="RPG">RPG</option>
-            <option value="Estrategia">Estrategia</option>
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nombre}
+              </option>
+            ))}
           </select>
 
           <label className="form-label mt-3">Plataformas:</label>
           <div className="checkbox-group mb-3">
-            <label className="me-3"><input type="checkbox" /> PC</label>
-            <label className="me-3"><input type="checkbox" /> PS5</label>
-            <label className="me-3"><input type="checkbox" /> Xbox Series X</label>
-            <label><input type="checkbox" /> Nintendo Switch</label>
+            {plataformas.map((plataforma) => (
+              <label key={plataforma.id} className="me-3">
+                <input
+                  type="checkbox"
+                  value={plataforma.id}
+                  checked={plataformasSeleccionadas.includes(plataforma.id)}
+                  onChange={(e) => {
+                    const id = Number(e.currentTarget.value);
+                    setPlataformasSeleccionadas((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((pid) => pid !== id)
+                        : [...prev, id]
+                    );
+                  }}
+                />{" "}
+                {plataforma.nombre}
+              </label>
+            ))}
           </div>
-
+          
           <FormInput
             label="Descuento"
             type="number"
             id="descuento"
-            value=""
-            onChange={() => {}}
+            value={descuento.toString()}
+            onChange={(e) => setDescuento(Number(e.currentTarget.value))}
           />
 
           <FormInput
             label="Fecha de lanzamiento"
             type="date"
             id="fecha"
-            value=""
-            onChange={() => {}}
+            value={fechaLanzamiento}
+            onChange={(e) => setFechaLanzamiento(e.currentTarget.value)}
           />
 
           <label className="form-label mt-3">Imagen:</label>
-          <input className="form-control" type="file" disabled />
+          <input className="form-control" type="file"/>
 
           <div className="mt-4">
             <SubmitButton label="Crear" />

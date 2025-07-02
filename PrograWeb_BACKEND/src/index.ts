@@ -19,92 +19,150 @@ app.get("/", (req: Request, resp: Response) => {
   resp.send("Endpoint raiz de Backend de Marketplace");
 });
 
-app.get("/juegos", async (req: Request, resp: Response) => {
-  const prisma = new PrismaClient()
-  const estado = req.query.estado
-
-  if (estado === undefined) {
-    const listaJuegos = await prisma.juego.findMany()
-    resp.json(listaJuegos);
-    return;
+app.get("/games", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+  try {
+    const games = await prisma.game.findMany({
+      where: { estado: true }, // <<<< SOLO VISIBLES
+      include: {
+        categoria: true,
+        plataformas: {
+          include: { platform: true }
+        }
+      }
+    });
+    res.json(games);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener los juegos" });
+  } finally {
+    await prisma.$disconnect();
   }
-
-  const listaJuegos = await prisma.juego.findMany({
-    where: {
-      estado: estado == "0" ? false : true
-    }
-  });
-
-  resp.json(listaJuegos);
 });
 
-app.post("/juegos", async (req: Request, resp: Response) => {
-    const prisma = new PrismaClient();
-    const juego = req.body;
-
-    // Validar que se envíe data
-    if (juego == undefined) {
-        resp.status(400).json({
-            msg: "Debe enviar data del JUEGO."
-        });
-        return;
-    }
-
-    // Validar que se envíe 'nombre'
-    if (juego.nombre == undefined) {
-        resp.status(400).json({
-            msg: "Debe enviar un nombre del JUEGO."
-        });
-        return;
-    }
-
-    // Validar que se envíe 'precio'
-    if (juego.precio == undefined) {
-        resp.status(400).json({
-            msg: "Debe enviar un precio del JUEGO."
-        });
-        return;
-    }
-
-    // Validar que se envíe 'categoriaId'
-    if (juego.categoriaId == undefined) {
-        resp.status(400).json({
-            msg: "Debe enviar un categoriaId del JUEGO."
-        });
-        return;
-    }
-
-    try {
-        const juegoCreado = await prisma.juego.create({
-            data: {
-                nombre: juego.nombre,
-                precio: juego.precio,
-                categoriaId: juego.categoriaId,
-                esta_oferta: juego.esta_oferta ?? false,
-                estado: juego.estado ?? true,
-            },
-        });
-
-        resp.json({
-            msg: "Juego creado correctamente.",
-            juego: juegoCreado
-        });
-    } catch (error) {
-        console.error(error);
-        resp.status(500).json({
-            msg: "Error al crear el juego."
-        });
-    }
+app.get("/categorias", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+  try {
+    const categorias = await prisma.category.findMany();
+    res.json(categorias);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las categorías" });
+  } finally {
+    await prisma.$disconnect();
+  }
 });
 
-app.get("/noticias", async (req: Request, resp: Response) => {
-  const prisma = new PrismaClient()
-  const estado = req.query.estado
+app.get("/plataformas", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+  try {
+    const plataformas = await prisma.platform.findMany();
+    res.json(plataformas);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener las plataformas" });
+  } finally {
+    await prisma.$disconnect();
+  }
+});
 
-  if (estado === undefined) {
-    const listaNoticias = await prisma.noticia.findMany()
-    resp.json(listaNoticias);
-    return;
+app.post("/games", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+
+  try {
+    const {
+      titulo,
+      description,
+      precio,
+      categoriaId,
+      releaseDate,
+      plataformasSeleccionadas,
+      descuento
+    } = req.body;
+
+    // Validaciones básicas
+    if (!titulo || !description || !precio || !categoriaId || !releaseDate) {
+      res.status(400).json({ error: "Faltan campos obligatorios." });
+      return;
+    }
+
+    // Crear el juego
+    const nuevoJuego = await prisma.game.create({
+      data: {
+        titulo,
+        description,
+        precio: parseFloat(precio),
+        categoria: { connect: { id: parseInt(categoriaId) } },
+        releaseDate: new Date(releaseDate),
+        image: null, // opcional, por ahora null
+        videoURL: null, // opcional
+        rating: null, // opcional
+        descuento: descuento ? parseFloat(descuento) : 0,
+      },
+    });
+
+    // Insertar plataformas seleccionadas en la tabla intermedia
+    if (Array.isArray(plataformasSeleccionadas)) {
+      for (const plataformaId of plataformasSeleccionadas) {
+        await prisma.platformOnGame.create({
+          data: {
+            gameId: nuevoJuego.id,
+            platformId: parseInt(plataformaId),
+          },
+        });
+      }
+    }
+
+    res.status(201).json({ message: "Juego creado exitosamente", juego: nuevoJuego });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al crear el juego" });
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
+app.patch("/games/:id/ocultar", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+  const { id } = req.params;
+
+  try {
+    const juego = await prisma.game.update({
+      where: { id: parseInt(id) },
+      data: { estado: false },
+    });
+
+    res.json({ message: "Juego ocultado correctamente", juego });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al ocultar el juego" });
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
+app.put("/games/:id", async (req: Request, res: Response) => {
+  const prisma = new PrismaClient();
+  const { id } = req.params;
+  const { titulo, description, precio, descuento, releaseDate } = req.body;
+
+  try {
+    const juegoActualizado = await prisma.game.update({
+      where: { id: parseInt(id) },
+      data: {
+        titulo,
+        description,
+        precio: parseFloat(precio),
+        descuento: parseFloat(descuento),
+        releaseDate: new Date(releaseDate),
+      },
+    });
+    res.json({ message: "Juego actualizado", juego: juegoActualizado });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al actualizar juego" });
+  } finally {
+    await prisma.$disconnect();
   }
 });
 

@@ -1,27 +1,42 @@
 import { Modal } from "react-bootstrap";
 import { useState, type FormEvent } from "react";
 import SubmitButton from "./Boton";
-import { ListaGames } from "../Utils/ListaJuegos";
+// import { ListaGames } from "../Utils/ListaJuegos";
 
 import "../Estilos/Modal.css";
-import type { Game } from "../Tipos/Game";
+// import type { Game } from "../Tipos/Game";
 
 interface ModalEliminarJuego {
   show: boolean;
   onHide: () => void;
   id: string;
+  fetchGames: () => Promise<void>;
 }
 
 export default function ModalEliminar({
   show,
   onHide,
   id,
+  fetchGames
 }: ModalEliminarJuego) {
-  const handleSubmit = (evt: FormEvent) => {
+  const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
-    // aca poner que elimine
-    //eliminarJuego(id);
-    onHide();
+
+    try {
+      const response = await fetch(`http://localhost:5000/games/${id}/ocultar`, {
+        method: "PATCH",
+      });
+
+      if (response.ok) {
+        console.log("Juego ocultado correctamente");
+        await fetchGames();
+        onHide();
+      } else {
+        console.error("Error al ocultar el juego");
+      }
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    }
   };
 
   return (

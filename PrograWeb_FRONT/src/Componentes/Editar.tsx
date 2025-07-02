@@ -10,29 +10,56 @@ interface ModalEditarJuego {
   show: boolean;
   onHide: () => void;
   juego: Game;
+  fetchGames: () => Promise<void>;
 }
 
-export default function ModalEditar({ show, onHide, juego }: ModalEditarJuego) {
+export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEditarJuego) {
   const [titulo1, setTitulo1] = useState("");
   const [description, setDescription] = useState("");
   const [precio, setPrecio] = useState(0);
+
+  const [descuento, setDescuento] = useState(0);
+  const [fechaLanzamiento, setFechaLanzamiento] = useState("");
 
   useEffect(() => {
     if (juego) {
       setTitulo1(juego.titulo);
       setDescription(juego.description ?? "");
       setPrecio(juego.precio ?? 0);
+      setDescuento(juego.descuento ?? 0);
+      setFechaLanzamiento(juego.releaseDate ? juego.releaseDate.substring(0, 10) : "");
     }
   }, [juego]);
 
-  const handleSubmit = (evt: FormEvent) => {
+  const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
 
     if (titulo1 !== "" && description !== "") {
-      juego.titulo = titulo1;
-      juego.description = description;
-      juego.precio = precio;
-      onHide();
+      const juegoActualizado = {
+        titulo: titulo1,
+        description,
+        precio,
+        descuento,
+        releaseDate: fechaLanzamiento,
+      };
+
+      try {
+        const response = await fetch(`http://localhost:5000/games/${juego.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(juegoActualizado),
+        });
+
+        if (response.ok) {
+          console.log("Juego editado correctamente");
+          await fetchGames(); // si lo pasas como prop para refrescar la tabla
+          onHide();
+        } else {
+          console.error("Error al editar juego:", await response.json());
+        }
+      } catch (error) {
+        console.error("Error en la solicitud:", error);
+      }
     }
   };
 
@@ -87,16 +114,16 @@ export default function ModalEditar({ show, onHide, juego }: ModalEditarJuego) {
             label="Descuento"
             type="number"
             id="descuento"
-            value=""
-            onChange={() => {}}
+            value={descuento.toString()}
+            onChange={(e) => setDescuento(Number(e.currentTarget.value))}
           />
 
           <FormInput
             label="Fecha de lanzamiento"
             type="date"
             id="fecha"
-            value=""
-            onChange={() => {}}
+            value={fechaLanzamiento}
+            onChange={(e) => setFechaLanzamiento(e.currentTarget.value)}
           />
 
           <label className="form-label mt-3">Imagen:</label>

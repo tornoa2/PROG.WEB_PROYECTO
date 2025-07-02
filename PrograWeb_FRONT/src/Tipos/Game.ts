@@ -6,10 +6,12 @@ export type Game = {
     titulo: string
     description?: string
     precio: number
+    releaseDate?: string;
     categoria_id?: number
     esta_oferta?: boolean
     estado?: boolean
     videoURL?: string
+    descuento?: number;
     detalleImagenes?: string[]
 
     // Relaciones:

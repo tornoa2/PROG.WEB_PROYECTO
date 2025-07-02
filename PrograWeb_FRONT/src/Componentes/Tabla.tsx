@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BsFillTrashFill, BsFillPencilFill } from "react-icons/bs";
 
 import "../Estilos/Table.css";
 
-import { ListaGames } from "../Utils/ListaJuegos";
+// import { ListaGames } from "../Utils/ListaJuegos";
 import type { Game } from "../Tipos/Game";
 import ModalAgregar from "./Agregar";
 import ModalEliminar from "./Eliminar";
@@ -26,6 +26,22 @@ export const Table = () => {
   };
   const cerrarModal3 = () => setModalAbierto3(false);
 
+  const [juegos, setJuegos] = useState<Game[]>([]);
+
+  const fetchGames = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/games");
+      const data = await response.json();
+      setJuegos(data);
+    } catch (error) {
+      console.error("Error al obtener juegos:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchGames();
+  }, []);
+
   return (
     <div className="table-wrapper">
       <div className="col-md-2">
@@ -38,7 +54,7 @@ export const Table = () => {
         </button>
 
         {modalAbierto && (
-          <ModalAgregar show={modalAbierto} onHide={cerrarModal} />
+          <ModalAgregar show={modalAbierto} onHide={cerrarModal} fetchGames={fetchGames} />
         )}
       </div>
 
@@ -55,14 +71,14 @@ export const Table = () => {
           </tr>
         </thead>
         <tbody>
-          {ListaGames.map((juego: Game) => (
+          {juegos.map((juego: Game) => (
             <tr key={juego.id}>
               <td>{juego.id}</td>
               <td className="expandesque">{juego.titulo}</td>
               <td>{juego.categoria?.nombre ?? "-"}</td>
               <td>{juego.precio}</td>
-              <td>0</td>
-              <td>{juego.precio}</td>
+              <td>{juego.descuento ?? 0}</td>
+              <td>{(juego.precio - (juego.precio * (juego.descuento ?? 0) / 100)).toFixed(2)}</td>
               <td className="fit">
                 <span className="actions">
                   <BsFillTrashFill
@@ -74,6 +90,7 @@ export const Table = () => {
                       show={modalAbierto2}
                       onHide={cerrarModal2}
                       id={juego.id}
+                      fetchGames={fetchGames}
                     />
                   )}
 
@@ -86,6 +103,7 @@ export const Table = () => {
                       show={modalAbierto3}
                       onHide={cerrarModal3}
                       juego={juegoSeleccionado}
+                      fetchGames={fetchGames}
                     />
                   )}
                 </span>
