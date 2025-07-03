@@ -71,9 +71,9 @@ export const Table = () => {
           </tr>
         </thead>
         <tbody>
-          {juegos.map((juego: Game) => (
+          {juegos.map((juego: Game, index: number) => (
             <tr key={juego.id}>
-              <td>{juego.id}</td>
+              <td>{index + 1}</td>
               <td className="expandesque">{juego.titulo}</td>
               <td>{juego.categoria?.nombre ?? "-"}</td>
               <td>{juego.precio}</td>

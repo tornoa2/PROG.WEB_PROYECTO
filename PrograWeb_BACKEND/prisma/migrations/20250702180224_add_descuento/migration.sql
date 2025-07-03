@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Game" ADD COLUMN     "descuento" DOUBLE PRECISION DEFAULT 0;

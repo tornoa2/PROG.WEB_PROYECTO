@@ -68,10 +68,14 @@ model User {
 }
 
 model News {
-  id      Int     @id @default(autoincrement())
-  titulo  String
-  texto   String
-  activo  Boolean @default(true)
+  id                Int       @id @default(autoincrement())
+  titulo            String
+  subtitulo         String?
+  cuerpo            String    // contenido largo en HTML
+  imagenPrincipal   String?
+  fecha_publicacion DateTime? // fecha de publicación
+  etiquetas         String[]  // lista de etiquetas
+  activo            Boolean   @default(true)
 }
 
 model Sale {

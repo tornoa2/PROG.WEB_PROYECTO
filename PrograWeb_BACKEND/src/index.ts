@@ -2,13 +2,12 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from "body-parser";
-// import { listaCanciones, Cancion } from "./data";
 import { Prisma, PrismaClient } from "./generated/prisma";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT;
-
+const prisma = new PrismaClient();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ 
@@ -24,6 +23,9 @@ app.get("/games", async (req: Request, res: Response) => {
   try {
     const games = await prisma.game.findMany({
       where: { estado: true }, // <<<< SOLO VISIBLES
+      orderBy: {
+        id: 'asc',
+      },
       include: {
         categoria: true,
         plataformas: {
@@ -67,8 +69,6 @@ app.get("/plataformas", async (req: Request, res: Response) => {
 });
 
 app.post("/games", async (req: Request, res: Response) => {
-  const prisma = new PrismaClient();
-
   try {
     const {
       titulo,
@@ -92,12 +92,13 @@ app.post("/games", async (req: Request, res: Response) => {
         titulo,
         description,
         precio: parseFloat(precio),
-        categoria: { connect: { id: parseInt(categoriaId) } },
+        categoria_id: parseInt(categoriaId),
         releaseDate: new Date(releaseDate),
         image: null, // opcional, por ahora null
         videoURL: null, // opcional
         rating: null, // opcional
         descuento: descuento ? parseFloat(descuento) : 0,
+        esta_oferta: descuento && descuento > 0 ? true : false,
       },
     });
 
@@ -142,27 +143,65 @@ app.patch("/games/:id/ocultar", async (req: Request, res: Response) => {
 });
 
 app.put("/games/:id", async (req: Request, res: Response) => {
-  const prisma = new PrismaClient();
   const { id } = req.params;
-  const { titulo, description, precio, descuento, releaseDate } = req.body;
+  const {
+    titulo,
+    description,
+    precio,
+    descuento,
+    releaseDate,
+    categoriaId,
+    plataformasSeleccionadas,
+  } = req.body;
 
   try {
+    // Validación básica
+    if (!titulo || !description || !precio || !releaseDate || !categoriaId) {
+      res.status(400).json({ error: "Faltan campos obligatorios." });
+      return;
+    }
+
+    // Actualizar el juego en la tabla Game
     const juegoActualizado = await prisma.game.update({
       where: { id: parseInt(id) },
       data: {
         titulo,
         description,
         precio: parseFloat(precio),
-        descuento: parseFloat(descuento),
+        descuento: descuento ? parseFloat(descuento) : 0,
+        esta_oferta: descuento && descuento > 0 ? true : false,
         releaseDate: new Date(releaseDate),
+        categoria_id: parseInt(categoriaId),
       },
     });
-    res.json({ message: "Juego actualizado", juego: juegoActualizado });
+
+    // Actualizar plataformas:
+    if (Array.isArray(plataformasSeleccionadas)) {
+      // Eliminar relaciones anteriores del juego con plataformas
+      await prisma.platformOnGame.deleteMany({
+        where: { gameId: parseInt(id) },
+      });
+
+      // Insertar las nuevas relaciones
+      if (plataformasSeleccionadas.length > 0) {
+        const datosPlataformas = plataformasSeleccionadas.map((platformId: number) => ({
+          gameId: parseInt(id),
+          platformId: platformId,
+        }));
+
+        await prisma.platformOnGame.createMany({
+          data: datosPlataformas,
+        });
+      }
+    }
+
+    res.status(200).json({
+      message: "Juego actualizado correctamente",
+      juego: juegoActualizado,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error al actualizar juego:", error);
     res.status(500).json({ error: "Error al actualizar juego" });
-  } finally {
-    await prisma.$disconnect();
   }
 });
 

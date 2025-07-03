@@ -6,10 +6,12 @@ CREATE TABLE "Game" (
     "titulo" TEXT NOT NULL,
     "description" TEXT,
     "precio" DOUBLE PRECISION NOT NULL,
+    "descuento" DOUBLE PRECISION DEFAULT 0,
     "esta_oferta" BOOLEAN DEFAULT false,
     "estado" BOOLEAN DEFAULT true,
     "videoURL" TEXT,
     "detalleImagenes" TEXT[],
+    "releaseDate" TIMESTAMP(3),
     "categoria_id" INTEGER,
 
     CONSTRAINT "Game_pkey" PRIMARY KEY ("id")

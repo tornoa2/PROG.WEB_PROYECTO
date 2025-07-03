@@ -17,10 +17,16 @@ export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEd
   const [titulo1, setTitulo1] = useState("");
   const [description, setDescription] = useState("");
   const [precio, setPrecio] = useState(0);
-
   const [descuento, setDescuento] = useState(0);
   const [fechaLanzamiento, setFechaLanzamiento] = useState("");
 
+  const [categorias, setCategorias] = useState<{ id: number, nombre: string }[]>([]);
+  const [categoriaId, setCategoriaId] = useState<number | "">("");
+
+  const [plataformas, setPlataformas] = useState<{ id: number, nombre: string }[]>([]);
+  const [plataformasSeleccionadas, setPlataformasSeleccionadas] = useState<number[]>([]);
+
+  // Cargar datos iniciales del juego
   useEffect(() => {
     if (juego) {
       setTitulo1(juego.titulo);
@@ -28,8 +34,43 @@ export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEd
       setPrecio(juego.precio ?? 0);
       setDescuento(juego.descuento ?? 0);
       setFechaLanzamiento(juego.releaseDate ? juego.releaseDate.substring(0, 10) : "");
+      setCategoriaId(juego.categoria_id ?? "");
+
+      // Si tu objeto juego ya trae las plataformas asociadas como IDs:
+      if (juego.plataformas) {
+        const ids = juego.plataformas.map((p: any) => p.platformId);
+        setPlataformasSeleccionadas(ids);
+      }
     }
   }, [juego]);
+
+  // Obtener categorías desde backend
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/categorias");
+        const data = await response.json();
+        setCategorias(data);
+      } catch (error) {
+        console.error("Error al obtener categorías:", error);
+      }
+    };
+    fetchCategorias();
+  }, []);
+
+  // Obtener plataformas desde backend
+  useEffect(() => {
+    const fetchPlataformas = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/plataformas");
+        const data = await response.json();
+        setPlataformas(data);
+      } catch (error) {
+        console.error("Error al obtener plataformas:", error);
+      }
+    };
+    fetchPlataformas();
+  }, []);
 
   const handleSubmit = async (evt: FormEvent) => {
     evt.preventDefault();
@@ -41,6 +82,8 @@ export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEd
         precio,
         descuento,
         releaseDate: fechaLanzamiento,
+        categoriaId, // mantener en camelCase, mapear en backend
+        plataformasSeleccionadas,
       };
 
       try {
@@ -52,7 +95,7 @@ export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEd
 
         if (response.ok) {
           console.log("Juego editado correctamente");
-          await fetchGames(); // si lo pasas como prop para refrescar la tabla
+          await fetchGames();
           onHide();
         } else {
           console.error("Error al editar juego:", await response.json());
@@ -94,20 +137,41 @@ export default function ModalEditar({ show, onHide, juego, fetchGames }: ModalEd
           />
 
           <label className="form-label mt-3">Género:</label>
-          <select className="form-control mb-2" disabled>
-            <option>Seleccione un género</option>
-            <option>Acción</option>
-            <option>Aventura</option>
-            <option>RPG</option>
-            <option>Estrategia</option>
+          <select
+            className="form-control mb-2"
+            value={categoriaId}
+            onChange={(e) =>
+              setCategoriaId(e.currentTarget.value ? Number(e.currentTarget.value) : "")
+            }
+          >
+            <option value="">Seleccione un género</option>
+            {categorias.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nombre}
+              </option>
+            ))}
           </select>
 
           <label className="form-label mt-3">Plataformas:</label>
           <div className="checkbox-group mb-3">
-            <label className="me-3"><input type="checkbox" disabled /> PC</label>
-            <label className="me-3"><input type="checkbox" disabled /> PS5</label>
-            <label className="me-3"><input type="checkbox" disabled /> Xbox Series X</label>
-            <label><input type="checkbox" disabled /> Nintendo Switch</label>
+            {plataformas.map((plataforma) => (
+              <label key={plataforma.id} className="me-3">
+                <input
+                  type="checkbox"
+                  value={plataforma.id}
+                  checked={plataformasSeleccionadas.includes(plataforma.id)}
+                  onChange={(e) => {
+                    const id = Number(e.currentTarget.value);
+                    setPlataformasSeleccionadas((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((pid) => pid !== id)
+                        : [...prev, id]
+                    );
+                  }}
+                />{" "}
+                {plataforma.nombre}
+              </label>
+            ))}
           </div>
 
           <FormInput
