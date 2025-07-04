@@ -1,40 +1,45 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Sidebar from "../Componentes/Barra";
 import NavBar from "../Componentes/BarraNavegacion";
+import TablaNoticias from "../Componentes/TablaNoticias";
+import AgregarNoticia from "../Componentes/AgregarNoticia";
+import EditarNoticia from "../Componentes/EditarNoticia";
+import ModalEliminarNoticia from "../Componentes/EliminarNoticia";
 import "../Estilos/vistaAdmin.css";
 
-const API_KEY_NEWS = "843615a3265647d0a44982ded9ceb2ba";
-
-interface Noticia {
-  title: string;
-  description: string;
-}
+import type { Noticia } from "../Tipos/Noticia";
 
 export default function VistaNoticias() {
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
-  const [error, setError] = useState(false);
+  const [modalAgregarAbierto, setModalAgregarAbierto] = useState(false);
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  const [noticiaSeleccionada, setNoticiaSeleccionada] = useState<Noticia | null>(null);
+  const [noticiaIdSeleccionada, setNoticiaIdSeleccionada] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetch(
-      `https://newsapi.org/v2/everything?q=videojuegos&language=es&sortBy=publishedAt&pageSize=5&apiKey=${API_KEY_NEWS}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.articles && data.articles.length > 0) {
-          const noticiasFiltradas = data.articles.map((articulo: any) => ({
-            title: articulo.title,
-            description: articulo.description || "Sin descripción disponible",
-          }));
-          setNoticias(noticiasFiltradas);
-        } else {
-          setNoticias([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Error al cargar noticias:", err);
-        setError(true);
-      });
-  }, []);
+  const abrirModalAgregar = () => setModalAgregarAbierto(true);
+  const cerrarModalAgregar = () => setModalAgregarAbierto(false);
+
+  const abrirModalEditar = (noticia: Noticia) => {
+    setNoticiaSeleccionada(noticia);
+    setModalEditarAbierto(true);
+  };
+  const cerrarModalEditar = () => {
+    setNoticiaSeleccionada(null);
+    setModalEditarAbierto(false);
+  };
+
+  const abrirModalEliminar = (id: number) => {
+    setNoticiaIdSeleccionada(id);
+    setModalEliminarAbierto(true);
+  };
+  const cerrarModalEliminar = () => {
+    setNoticiaIdSeleccionada(null);
+    setModalEliminarAbierto(false);
+  };
+
+  const fetchNoticias = async () => {
+    window.location.reload();
+  };
 
   return (
     <div>
@@ -43,34 +48,43 @@ export default function VistaNoticias() {
         <Sidebar />
         <main className="p-4 w-100">
           <h2>Gestor de Noticias</h2>
-          <div className="card-body">
-            <div className="table-responsive">
-              {error ? (
-                <p>Error al cargar noticias.</p>
-              ) : noticias.length === 0 ? (
-                <p>No se encontraron noticias.</p>
-              ) : (
-                <table className="table align-middle">
-                  <thead className="table-dark">
-                    <tr>
-                      <th>#</th>
-                      <th>Título</th>
-                      <th>Descripción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {noticias.map((noticia, index) => (
-                      <tr key={index}>
-                        <td>{index + 1}</td>
-                        <td>{noticia.title}</td>
-                        <td>{noticia.description}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+          <button
+            className="btn btn-primary mb-3"
+            onClick={abrirModalAgregar}
+          >
+            Agregar Noticia
+          </button>
+
+          <TablaNoticias
+            abrirModalEditar={abrirModalEditar}
+            abrirModalEliminar={abrirModalEliminar}
+          />
+          <AgregarNoticia
+            show={modalAgregarAbierto}
+            onHide={cerrarModalAgregar}
+            fetchNoticias={fetchNoticias}
+          />
+
+          <EditarNoticia
+            show={modalEditarAbierto}
+            onHide={cerrarModalEditar}
+            noticia={noticiaSeleccionada!}
+            fetchNoticias={fetchNoticias}
+          />
+
+          {modalEliminarAbierto && noticiaIdSeleccionada !== null && (
+            <ModalEliminarNoticia
+              show={modalEliminarAbierto}
+              onHide={cerrarModalEliminar}
+              id={noticiaIdSeleccionada}
+              fetchNoticias={fetchNoticias}
+            />
+          )}
+
+          {/* En siguientes pasos agregaremos: */}
+          {/* ModalAgregarNoticia modal abierto: {modalAgregarAbierto} */}
+          {/* ModalEditarNoticia modal abierto: {modalEditarAbierto}, data: {noticiaSeleccionada} */}
+          {/* ModalEliminarNoticia modal abierto: {modalEliminarAbierto}, id: {noticiaIdSeleccionada} */}
         </main>
       </div>
     </div>

@@ -1,1 +1,1 @@
-GET http://localhost:5000/noticias
+GET http://localhost:5000/news

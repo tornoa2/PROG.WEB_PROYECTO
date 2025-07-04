@@ -71,7 +71,7 @@ model News {
   id                Int       @id @default(autoincrement())
   titulo            String
   subtitulo         String?
-  cuerpo            String    // contenido largo en HTML
+  cuerpo            String
   imagenPrincipal   String?
   fecha_publicacion DateTime? // fecha de publicación
   etiquetas         String[]  // lista de etiquetas

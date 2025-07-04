@@ -4,6 +4,7 @@ import cors from "cors";
 import bodyParser from "body-parser";
 import { Prisma, PrismaClient } from "./generated/prisma";
 dotenv.config();
+import noticiasRouter from "./noticias";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -13,6 +14,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ 
   extended: true 
 }));
+
+app.use("/news", noticiasRouter);
 
 app.get("/", (req: Request, resp: Response) => {
   resp.send("Endpoint raiz de Backend de Marketplace");
